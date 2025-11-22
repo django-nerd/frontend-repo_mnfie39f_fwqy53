@@ -1,71 +1,81 @@
-function App() {
+import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import { About, Experience, Projects, Skills, Education, Contact } from './components/Sections'
+
+function useActiveSection(ids) {
+  const [active, setActive] = useState('hero')
+  useEffect(() => {
+    const observers = []
+    ids.forEach((id) => {
+      const el = document.getElementById(id)
+      if (!el) return
+      const obs = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if (e.isIntersecting) setActive(id) })
+      }, { threshold: 0.4 })
+      obs.observe(el)
+      observers.push(obs)
+    })
+    return () => observers.forEach(o=>o.disconnect())
+  }, [ids])
+  return active
+}
+
+function ScrollProgress() {
+  const [progress, setProgress] = useState(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement
+      const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight)
+      setProgress(scrolled)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
+    <div className="fixed top-0 left-0 right-0 z-[60]">
+      <div className="h-1 bg-gradient-to-r from-[#7C3AED] to-[#22D3EE]" style={{ width: `${progress*100}%` }} />
+    </div>
+  )
+}
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
+function App() {
+  const active = useActiveSection(['hero','about','experience','projects','skills','education','contact'])
 
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
+  useEffect(() => {
+    const handleLink = (e) => {
+      const a = e.target.closest('a[href^="#"]')
+      if (!a) return
+      const id = a.getAttribute('href').slice(1)
+      const el = document.getElementById(id)
+      if (!el) return
+      e.preventDefault()
+      window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' })
+    }
+    document.addEventListener('click', handleLink)
+    return () => document.removeEventListener('click', handleLink)
+  }, [])
 
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
+  return (
+    <div className="min-h-screen bg-[#050714] text-white selection:bg-[#7C3AED]/40 selection:text-white">
+      <ScrollProgress />
+      <Navbar activeId={active} />
 
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
+      <main className="relative">
+        <div className="absolute inset-0 pointer-events-none" style={{background: 'radial-gradient(1000px 500px at -10% -10%, #7C3AED14, transparent), radial-gradient(800px 400px at 110% -10%, #22D3EE14, transparent)'}} />
+        <div className="relative mx-auto max-w-[1600px]">
+          <Hero />
+          <About />
+          <Experience />
+          <Projects />
+          <Skills />
+          <Education />
+          <Contact />
+          <footer className="py-12 text-center text-white/50">© {new Date().getFullYear()} {{NAME}} — Crafted with care.</footer>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
